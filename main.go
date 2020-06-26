@@ -191,38 +191,34 @@ func getOTXURLs(domain string, noSubs bool) ([]wurl, error) {
 	if noSubs {
 		subsWildcard = ""
 	}
-	for{
+
 	res, err := http.Get(
-		fmt.Sprintf("https://otx.alienvault.com/api/v1/indicators/hostname/%s/url_list?limit=200&page=%d",domain,page)
+		fmt.Sprintf("http://index.commoncrawl.org/CC-MAIN-2018-22-index?url=%s%s/*&output=json", subsWildcard, domain),
 	)
 	if err != nil {
 		return []wurl{}, err
 	}
 
-        raw, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	sc := bufio.NewScanner(res.Body)
 
 	out := make([]wurl, 0)
 
 	for sc.Scan() {
 
 		wrapper := struct {
-			URL  string `json:"url"`
-			HasNext bool `json:"has_next"`
-			
+			URL       string `json:"url"`
+			Timestamp string `json:"timestamp"`
 		}{}
 		err = json.Unmarshal([]byte(sc.Text()), &wrapper)
 
-		if err != nil {
+		if err != nil{
 			continue
 		}
 
-		out = append(out, wurl{HasNext: wrapper.HasNext, url: wrapper.URL})
+		out = append(out, wurl{date: wrapper.Timestamp, url: wrapper.URL})
 	}
-	if !wrapper.HasNext {
-            break
-	}
-		page++
-	}
+
 	return out, nil
 
 }
