@@ -13,12 +13,7 @@ import (
 	"sync"
 	"time"
 )
-type OTXResult struct {
-    HasNext bool `json:"has_next"`
-    URLList []struct {
-        URL string `json:"url"`
-    } `json:"url_list"`
-}
+
 
 func main() {
 
@@ -51,7 +46,7 @@ func main() {
 	fetchFns := []fetchFn{
 		getWaybackURLs,
 		getCommonCrawlURLs,
-		getOtxUrls,
+		getOTXURLs,
 		getVirusTotalURLs,
 	}
 
@@ -191,7 +186,7 @@ func getCommonCrawlURLs(domain string, noSubs bool) ([]wurl, error) {
 
 }
 
-func tomnomnomgetOTXURLs(domain string, noSubs bool) ([]wurl, error) {
+func getOTXURLs(domain string, noSubs bool) ([]wurl, error) {
 	subsWildcard := "*."
 	if noSubs {
 		subsWildcard = ""
@@ -232,34 +227,7 @@ func tomnomnomgetOTXURLs(domain string, noSubs bool) ([]wurl, error) {
 
 }
 
-func getOtxUrls(hostname string, noSubs bool) ([]string, error) {
-    var urls []string
-    page := 0
-    for {
-        r, err := client.Get(fmt.Sprintf("https://otx.alienvault.com/api/v1/indicators/hostname/%s/url_list?limit=50&page=%d", hostname, page))
-        if err != nil {
-            return nil, errors.New(fmt.Sprintf("http request to OTX failed: %s", err.Error()))
-        }
-        defer r.Body.Close()
-        bytes, err := ioutil.ReadAll(r.Body)
-        if err != nil {
-            return nil, errors.New(fmt.Sprintf("error reading body from alienvault: %s", err.Error()))
-        }
-        o := &OTXResult{}
-        err = jsoniter.Unmarshal(bytes, o)
-        if err != nil {
-            return nil, errors.New(fmt.Sprintf("could not decode json response from alienvault: %s", err.Error()))
-        }
-        for _, url := range o.URLList {
-            urls = append(urls, url.URL)
-        }
-        if !o.HasNext {
-            break
-        }
-        page++
-    }
-    return urls, nil
-}
+
 
 func getVirusTotalURLs(domain string, noSubs bool) ([]wurl, error) {
 	out := make([]wurl, 0)
