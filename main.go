@@ -173,6 +173,43 @@ func getCommonCrawlURLs(domain string, noSubs bool) ([]wurl, error) {
 		}{}
 		err = json.Unmarshal([]byte(sc.Text()), &wrapper)
 
+		if err != nil{
+			continue
+		}
+
+		out = append(out, wurl{date: wrapper.Timestamp, url: wrapper.URL})
+	}
+
+	return out, nil
+
+}
+
+func getOTXURLs(domain string, noSubs bool) ([]wurl, error) {
+	subsWildcard := "*."
+	if noSubs {
+		subsWildcard = ""
+	}
+
+	res, err := http.Get(
+		fmt.Sprintf("https://otx.alienvault.com/api/v1/indicators/hostname/%s/url_list?limit=200&page=%d",domain,page)
+	)
+	if err != nil {
+		return []wurl{}, err
+	}
+
+	defer res.Body.Close()
+	sc := bufio.NewScanner(res.Body)
+
+	out := make([]wurl, 0)
+
+	for sc.Scan() {
+
+		wrapper := struct {
+			URL       string `json:"url"`
+			date string `json:"date"`
+		}{}
+		err = json.Unmarshal([]byte(sc.Text()), &wrapper)
+
 		if err != nil {
 			continue
 		}
