@@ -196,7 +196,7 @@ func tomnomnomgetOTXURLs(domain string, noSubs bool) ([]wurl, error) {
 	if noSubs {
 		subsWildcard = ""
 	}
-
+	for{
 	res, err := http.Get(
 		fmt.Sprintf("https://otx.alienvault.com/api/v1/indicators/hostname/%s/url_list?limit=200&page=%d",domain,page)
 	)
@@ -212,7 +212,8 @@ func tomnomnomgetOTXURLs(domain string, noSubs bool) ([]wurl, error) {
 
 		wrapper := struct {
 			URL  string `json:"url"`
-			date string `json:"date"`
+			HasNext bool `json:"has_next"`
+			
 		}{}
 		err = json.Unmarshal([]byte(sc.Text()), &wrapper)
 
@@ -220,9 +221,13 @@ func tomnomnomgetOTXURLs(domain string, noSubs bool) ([]wurl, error) {
 			continue
 		}
 
-		out = append(out, wurl{date: wrapper.date, url: wrapper.URL})
+		out = append(out, wurl{HasNext: wrapper.HasNext, url: wrapper.URL})
 	}
-
+	if !wrapper.HasNext {
+            break
+	}
+		page++
+	}
 	return out, nil
 
 }
