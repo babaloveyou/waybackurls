@@ -114,7 +114,7 @@ func getWaybackURLs(domain string, noSubs bool) ([]wurl, error) {
 	if noSubs {
 		subsWildcard = ""
 	}
-        os.Setenv("HTTP_PROXY", "socks5://127.0.0.1:10809")
+        os.Setenv("HTTP_PROXY", "socks5://127.0.0.1:10808")
 	c := http.Client{}
 	res, err := c.Get(
 		fmt.Sprintf("http://web.archive.org/cdx/search/cdx?url=%s%s/*&output=json&collapse=urlkey", subsWildcard, domain),
